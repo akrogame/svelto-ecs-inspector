@@ -6,30 +6,26 @@ import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
 import { useQuery } from "react-query";
 import axios from "axios";
-import { styled } from '@mui/material/styles';
-import Paper from '@mui/material/Paper';
-import Masonry from '@mui/lab/Masonry';
+import { styled } from "@mui/material/styles";
+import Paper from "@mui/material/Paper";
+import Masonry from "@mui/lab/Masonry";
 
 const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
+  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
   ...theme.typography.body2,
   padding: theme.spacing(0.5),
-  textAlign: 'center',
+  textAlign: "center",
   color: theme.palette.text.secondary,
 }));
 
-type QueryComponent = string;
-type QueryInvocation = {
-  components: QueryComponent[];
-}
 type Engine = {
   name: string;
-  queryInvocations: QueryInvocation[];
+  components: Array<Array<string>>;
 };
 
-const hasComponent = (engine: Engine, component: string) =>{
-  return engine.queryInvocations.some(q => q.components.some(c => c === component))
-}
+const hasComponent = (engine: Engine, component: string) => {
+  return engine.components.some((q) => q.some((c) => c === component));
+};
 
 export default function Engines() {
   const { isError, isLoading, data, error } = useQuery(
@@ -43,8 +39,10 @@ export default function Engines() {
     }
   );
   const components = React.useMemo(() => {
-    const set = data === undefined ? new Set<string>()
-      : new Set<string>(data.flatMap(x => x.queryInvocations.flatMap(q => q.components)));
+    const set =
+      data === undefined
+        ? new Set<string>()
+        : new Set<string>(data.flatMap((x) => x.components.flatMap((q) => q)));
     return Array.from(set).sort();
   }, [data]);
 
@@ -68,7 +66,7 @@ export default function Engines() {
           options={components}
           getOptionLabel={(option) => option}
           defaultValue={undefined}
-          onChange={(event, value) => setFilter(value)} 
+          onChange={(event, value) => setFilter(value)}
           renderInput={(params) => (
             <TextField
               {...params}
@@ -81,42 +79,52 @@ export default function Engines() {
       </Box>
       <Box>
         <Masonry columns={4} spacing={2}>
-          {data.filter(x => filter.every(f =>hasComponent(x, f))).map((system, index) => {
-            if (system.queryInvocations === undefined)
-              console.error("undefined", system);
-            return (
-              <Item key={index} >
-                <Typography
-                  sx={{ fontSize: 12 }}
-                  color="text.secondary"
-                  gutterBottom
-                >
-                  <b>{system.name}</b>
-                </Typography>
-                <hr></hr>
-                {system.queryInvocations.map((queryInvocation, qi) => {
-                  return (
-                    <div key={qi}>
-                      {queryInvocation.components.map((component, ci) => {
-                        return (
-                          <Typography
-                            key={`${qi}-${ci}`}
-                            fontSize={10}
-                            fontWeight={filter.some(f => f === component) ? "bold" : "initial"}
-                            color={filter.some(f => f === component) ? "primary" : "text.secondary"}
-                            gutterBottom
-                          >
-                            {component}
-                          </Typography>
-                        )
-                      })}
-                    <hr></hr>
-                    </div>
-                  );
-                })}
-              </Item>
-            );
-          })}
+          {data
+            .filter((x) => filter.every((f) => hasComponent(x, f)))
+            .map((system, index) => {
+              if (system.components === undefined)
+                console.error("undefined", system);
+              return (
+                <Item key={index}>
+                  <Typography
+                    sx={{ fontSize: 12 }}
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    <b>{system.name}</b>
+                  </Typography>
+                  <hr></hr>
+                  {system.components.map((queryInvocation, qi) => {
+                    return (
+                      <div key={qi}>
+                        {queryInvocation.map((component, ci) => {
+                          return (
+                            <Typography
+                              key={`${qi}-${ci}`}
+                              fontSize={10}
+                              fontWeight={
+                                filter.some((f) => f === component)
+                                  ? "bold"
+                                  : "initial"
+                              }
+                              color={
+                                filter.some((f) => f === component)
+                                  ? "primary"
+                                  : "text.secondary"
+                              }
+                              gutterBottom
+                            >
+                              {component}
+                            </Typography>
+                          );
+                        })}
+                        <hr></hr>
+                      </div>
+                    );
+                  })}
+                </Item>
+              );
+            })}
         </Masonry>
       </Box>
     </React.Fragment>
