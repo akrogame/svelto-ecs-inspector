@@ -10,17 +10,18 @@
     <Company>AkroGame</Company>
     <PackageDescription>API for Svelto ECS Inspector tool</PackageDescription>
     <RepositoryUrl>https://github.com/akrogame/svelto-ecs-inspector</RepositoryUrl>
-    	<EnablePreviewFeatures>True</EnablePreviewFeatures>
+    <EnablePreviewFeatures>True</EnablePreviewFeatures>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
-		<PackageReference Include="Svelto.Common" Version="3.2.3" />
-		<PackageReference Include="Svelto.ECS" Version="3.2.5" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(OutputPath)\$(AssemblyName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
+    <PackageReference Include="Svelto.Common" Version="3.3.0" />
+		<PackageReference Include="Svelto.ECS" Version="3.3.1" />
   </ItemGroup>
 
 </Project>

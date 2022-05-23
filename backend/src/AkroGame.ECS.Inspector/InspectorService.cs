@@ -98,12 +98,12 @@ namespace AkroGame.ECS.Inspector
             {
                 var debugComponents = new List<Component>();
                 var debugEntitiesForGroup = new List<Entity>();
-                var group = item.Key;
-                var components = item.Value;
+                var group = item.key;
+                var components = item.value;
                 foreach (var asd in components)
                 {
-                    Type component = asd.Key;
-                    var typeSafeDictionary = asd.Value;
+                    Type component = asd.key;
+                    var typeSafeDictionary = asd.value;
                     debugComponents.Add(new(component.Name.ToString()));
                     if (!debugEntitiesForGroup.Any())
                     {
