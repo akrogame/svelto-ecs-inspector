@@ -3,7 +3,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import * as React from "react";
 import { useQuery } from "react-query";
 import { useParams } from "react-router-dom";
@@ -29,7 +29,10 @@ export default function EntityInspector() {
   const params = useParams();
   const groupId = params.groupId;
   const entityId = params.entityId;
-  const { isError, isLoading, data, error } = useQuery(
+  const { isError, isLoading, data, error } = useQuery<
+    EntityComponents,
+    AxiosError
+  >(
     ["entity-inspector", groupId, entityId],
     async () => {
       const x = await axios.get<EntityComponents>(
@@ -46,7 +49,7 @@ export default function EntityInspector() {
   if (isError || error !== null)
     return (
       <Typography color="text.primary">
-        Error: {error ?? "unknown error happened"}
+        Error: {error.message ?? "unknown error happened"}
       </Typography>
     );
   if (data.components.length === 0)

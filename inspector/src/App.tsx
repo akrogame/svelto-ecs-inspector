@@ -27,15 +27,15 @@ function App() {
         <Container className="App">
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Main />}>
-                <Route path="/groups/" element={<Groups />} />
-                <Route path="entities/" element={<Entities />}>
+              <Route path="" element={<Main />}>
+                <Route path="groups/" element={<Groups />} />
+                <Route path="entities//*" element={<Entities />}>
                   <Route
                     path=":groupId/:entityId/"
                     element={<EntityInspector />}
                   />
                 </Route>
-                <Route path="/engines/" element={<Engines />} />
+                <Route path="engines/" element={<Engines />} />
               </Route>
             </Routes>
           </BrowserRouter>

@@ -5,7 +5,7 @@ import Link from "@mui/material/Link";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import * as React from "react";
 import { useQuery } from "react-query";
 import { Link as RouterLink, Route, Routes } from "react-router-dom";
@@ -43,7 +43,10 @@ export default function Entities() {
     if (event.target.value === "") setSearchQuery(undefined);
     else setSearchQuery(event.target.value);
   };
-  const { isError, isLoading, data, error } = useQuery(
+  const { isError, isLoading, data, error } = useQuery<
+    GrouppedEntities[],
+    AxiosError
+  >(
     ["entities"],
     async () => {
       const x = await axios.get<GrouppedEntities[]>("/debug/entities");
@@ -61,7 +64,7 @@ export default function Entities() {
   if (isError || error !== null)
     return (
       <Typography color="text.primary">
-        Error: {error ?? "unknown error happened"}
+        Error: {error.message ?? "unknown error happened"}
       </Typography>
     );
   if (data.length === 0)
@@ -69,8 +72,7 @@ export default function Entities() {
   return (
     <div>
       <TextField
-        id="standard-basic"
-        label="Standard"
+        label="Search"
         variant="standard"
         value={searchQuery || ""}
         onChange={updateSearchQuery}
