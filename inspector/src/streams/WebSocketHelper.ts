@@ -1,0 +1,56 @@
+import { useCallback, useEffect } from "react";
+import useWebSocket, { ReadyState } from "react-use-websocket";
+
+export interface Envelope<T> {
+  Id: string;
+  Payload: T;
+}
+export interface InspectorStreamOptions {
+  onMessageReceived: (e: Envelope<any>) => void;
+  onOpen: () => void;
+}
+const enc = new TextEncoder();
+export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
+  const onMessageReceived = useCallback(
+    async (msg: MessageEvent<any>) => {
+      const txt = await (msg.data as Blob).text();
+      const e = JSON.parse(txt) as Envelope<T>;
+      opts.onMessageReceived(e);
+    },
+    [opts.onMessageReceived]
+  );
+
+  const { sendMessage, lastMessage, readyState } = useWebSocket(
+    "ws://localhost:7777",
+    {
+      share: true,
+      onOpen: () => {
+        //console.log("opened");
+        //opts.onOpen();
+      },
+      //Will attempt to reconnect on all close events, such as server shutting down
+      shouldReconnect: (closeEvent) => true,
+      reconnectInterval: 2000,
+      onMessage: onMessageReceived,
+    }
+  );
+
+  useEffect(() => {
+    if (readyState == ReadyState.OPEN) opts.onOpen();
+  }, [readyState]);
+
+  const sendStringMessage = useCallback(
+    (s: string) => {
+      sendMessage(enc.encode(s));
+    },
+    [sendMessage]
+  );
+
+  return {
+    sendMessage: (msg: string) => {
+      sendStringMessage(msg);
+    },
+    readyState,
+    isOpen: readyState == ReadyState.OPEN,
+  };
+}

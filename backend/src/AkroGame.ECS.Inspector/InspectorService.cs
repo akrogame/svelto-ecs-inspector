@@ -2,10 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Svelto.Common;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.Hybrid;
@@ -210,6 +216,135 @@ namespace AkroGame.ECS.Inspector
                 }
 
                 return await Task.FromResult(Results.Ok(new EntityComponents(components)));
+            }
+
+            return await Task.FromResult(Results.NotFound());
+        }
+
+        private void SetComponent(
+            EntitiesDB db,
+            IntPtr array,
+            Type t,
+            object components,
+            object component,
+            uint index
+        )
+        {
+            unsafe
+            {
+                MethodInfo? sizeOfMethod = typeof(MemoryUtilities).GetMethod(
+                    "SizeOf"
+                )?.MakeGenericMethod(new Type[] { t });
+
+                var sizeB = sizeOfMethod?.Invoke(null, null);
+                if (sizeB == null)
+                    return;
+                var size = (int)(sizeB);
+
+                MethodInfo? copyMethod = typeof(Unsafe)
+                    .GetMethods()
+                    .Single(
+                        x =>
+                            x.Name == "Copy"
+                            && x.GetParameters().First().ParameterType == typeof(void*)
+                    )?.MakeGenericMethod(new Type[] { t });
+
+                //Marshal.StructureToPtr(component, IntPtr.Add(array, (int)index), )
+                copyMethod?.Invoke(
+                    null,
+                    new object[] { IntPtr.Add(array, (int)(size * index)), component }
+                );
+            }
+        }
+
+        public async Task<IResult> SetComponent(
+            uint groupId,
+            uint entityId,
+            string componentName,
+            JsonObject data
+        )
+        {
+            var ctorInfo = typeof(ExclusiveGroupStruct)?.GetConstructor(
+                BindingFlags.NonPublic | BindingFlags.Instance,
+                null,
+                new[] { typeof(uint) },
+                null
+            );
+
+            var obj = ctorInfo?.Invoke(new[] { (object)groupId });
+
+            if (obj is not null)
+            {
+                var group = (ExclusiveGroupStruct)obj;
+                MethodInfo? queryNativeComponent = typeof(EntityNativeDBExtensions).GetMethod(
+                    "QueryEntitiesAndIndex",
+                    new[]
+                    {
+                        typeof(EntitiesDB),
+                        typeof(uint),
+                        typeof(ExclusiveGroupStruct),
+                        typeof(uint).MakeByRefType()
+                    }
+                );
+                List<EntityComponentData> components = new();
+                foreach (Type componentType in groupEntityComponentsDB[group].keys)
+                {
+                    if (componentType.Name != componentName)
+                        continue;
+
+                    MethodInfo? queryMethod;
+                    if (componentType.IsAssignableTo(typeof(IEntityViewComponent)))
+                    {
+                        // TODO: not sure about managed components, could be dangerous to serialize
+                        continue;
+                    }
+                    else
+                        queryMethod = queryNativeComponent;
+                    MethodInfo? generic = queryMethod?.MakeGenericMethod(componentType);
+                    if (generic is null)
+                        continue;
+                    var queryParams = new object[] { entitiesDb, entityId, group, null };
+                    var componentDatas = generic?.Invoke(entitiesDb, queryParams);
+                    var index = (uint)queryParams[3];
+                    var d1 = typeof(NB<>);
+                    Type[] typeArgs = { componentType };
+                    var NBT = d1.MakeGenericType(typeArgs);
+                    var arrayB = NBT.GetMethod("ToNativeArray")?.Invoke(
+                        componentDatas,
+                        new object[] { null }
+                    );
+                    var nativeArrayParams = new object[] { null };
+                    if (arrayB is null)
+                        break;
+                    var array = (IntPtr)(arrayB);
+
+                    var componentData = JsonSerializer.Deserialize(
+                        data,
+                        componentType,
+                        new JsonSerializerOptions()
+                        {
+                            IncludeFields = true,
+                            PropertyNameCaseInsensitive = true
+                        }
+                    );
+                    SetComponent(
+                        entitiesDb,
+                        array,
+                        componentType,
+                        componentDatas,
+                        componentData,
+                        index
+                    );
+
+                    // PropertyInfo indexProperty = NBT
+                    // .GetProperties()
+                    // .Single(p => p.GetIndexParameters().Length == 1 && p.GetIndexParameters()[0].ParameterType == typeof(uint));
+
+                    // indexProperty.SetValue(componentDatas,componentData, new object[] { index });
+                    break;
+                }
+
+                return await Task.FromResult(Results.Ok());
             }
 
             return await Task.FromResult(Results.NotFound());

@@ -61,11 +61,14 @@ export default function PermanentDrawerLeft() {
   const location = useLocation();
   console.log(location);
 
-  const [currentPage, setCurrentPage] = React.useState<number>(
-    pages.findIndex(
+  const findPage = () => {
+    const p = pages.findIndex(
       (x, i) => i > 0 && location.pathname.startsWith(`/${x.link}`)
-    )
-  );
+    );
+    return p < 0 ? 0 : p;
+  };
+
+  const [currentPage, setCurrentPage] = React.useState<number>(findPage());
   console.log(currentPage);
   if (!searchParams.has("url")) setSearchParams({ url: servers[0] });
   const urlFromParam = searchParams.get("url") || servers[0];

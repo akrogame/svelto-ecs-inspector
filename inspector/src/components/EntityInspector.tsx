@@ -5,8 +5,10 @@ import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
 import axios, { AxiosError } from "axios";
 import * as React from "react";
+import ReactJson, { InteractionProps } from "react-json-view";
 import { useQuery } from "react-query";
 import { useParams } from "react-router-dom";
+import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -19,6 +21,7 @@ const Item = styled(Paper)(({ theme }) => ({
 
 type EntityComponent = {
   name: string;
+  prettyName: string;
   data: any;
 };
 type EntityComponents = {
@@ -29,47 +32,125 @@ export default function EntityInspector() {
   const params = useParams();
   const groupId = params.groupId;
   const entityId = params.entityId;
-  const { isError, isLoading, data, error } = useQuery<
-    EntityComponents,
-    AxiosError
-  >(
-    ["entity-inspector", groupId, entityId],
-    async () => {
-      const x = await axios.get<EntityComponents>(
-        `/debug/group/${groupId}/entity/${entityId}`
-      );
-      return x.data;
-    },
-    {
-      refetchInterval: 100,
-    }
+  const [data, setData] = React.useState<EntityComponent[] | undefined>(
+    undefined
   );
-  console.log(data);
-  if (isLoading || data === undefined) return <CircularProgress />;
-  if (isError || error !== null)
+  // const { isError, isLoading, data, error } = useQuery<
+  //   EntityComponents,
+  //   AxiosError
+  // >(
+  //   ["entity-inspector", groupId, entityId],
+  //   async () => {
+  //     const x = await axios.get<EntityComponents>(
+  //       `/debug/group/${groupId}/entity/${entityId}`
+  //     );
+  //     return x.data;
+  //   },
+  //   {
+  //     refetchInterval: 100,
+  //   }
+  // );
+  const { sendMessage, readyState, isOpen } = useInspectorStream({
+    onMessageReceived: (e: Envelope<any>) => {
+      if (e.Id !== "entity-data") return;
+      var result: Array<EntityComponent> = [];
+
+      for (var i in e.Payload)
+        result.push({
+          name: i,
+          prettyName: e.Payload[i].PrettyName,
+          data: e.Payload[i].Data,
+        });
+
+      setData(result);
+    },
+    onOpen: () => {
+      sendMessage(`sub entity-data ${groupId} ${entityId}`);
+    },
+  });
+
+  React.useEffect(() => {
+    if (isOpen) sendMessage(`sub entity-data ${groupId} ${entityId}`);
+    return () => {
+      sendMessage(`un-sub entity-data ${groupId} ${entityId}`);
+    };
+  }, [isOpen, sendMessage, groupId, entityId]);
+
+  if (data === undefined) return <CircularProgress />;
+
+  if (groupId === undefined || entityId === undefined)
     return (
-      <Typography color="text.primary">
-        Error: {error.message ?? "unknown error happened"}
+      <Typography>
+        You need to provide an entityId and a groupId to use this component
       </Typography>
     );
-  if (data.components.length === 0)
+
+  if (data.length === 0)
     return <Typography color="text.primary">No Entities</Typography>;
   return (
     <div>
       <Typography color="text.primary">Showing entity: {entityId}</Typography>
-      <Masonry columns={4} spacing={2}>
-        {data.components.map((component, index) => {
+      <Masonry columns={3} spacing={2}>
+        {data.map((component, index) => {
           return (
-            <Item key={index}>
-              <Typography fontSize={12} color="text.secondary" gutterBottom>
-                {component.name}
-              </Typography>
-              <hr></hr>
-              <pre>{JSON.stringify(component.data, null, 1)}</pre>
-            </Item>
+            <EditableEntityComponent
+              key={component.name}
+              groupId={groupId}
+              entityId={entityId}
+              data={component.data}
+              name={component.name}
+              prettyName={component.prettyName}
+              sendMessage={sendMessage}
+            />
           );
         })}
       </Masonry>
     </div>
   );
 }
+
+type EditableEntityComponentProps = {
+  data: any;
+  name: string;
+  prettyName: string;
+  groupId: string;
+  entityId: string;
+  sendMessage: (msg: string) => void;
+};
+
+const EditableEntityComponent = React.memo(
+  ({
+    groupId,
+    entityId,
+    data,
+    prettyName,
+    name,
+    sendMessage,
+  }: EditableEntityComponentProps) => {
+    const editCommit = React.useCallback(
+      (edit: InteractionProps) => {
+        sendMessage(
+          `update ${groupId} ${entityId} ${name} ${JSON.stringify(
+            edit.updated_src
+          )}`
+        );
+        return true;
+      },
+      [sendMessage, groupId, entityId, name]
+    );
+    return (
+      <Item>
+        <ReactJson
+          src={data}
+          name={prettyName}
+          indentWidth={2}
+          theme={"flat"}
+          onEdit={editCommit}
+        />
+      </Item>
+    );
+  },
+  (prevProps, nextProps) =>
+    prevProps.name === nextProps.name &&
+    JSON.stringify(prevProps.data) === JSON.stringify(nextProps.data)
+);

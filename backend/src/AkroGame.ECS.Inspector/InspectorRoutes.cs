@@ -16,6 +16,7 @@ namespace AkroGame.ECS.Inspector
                 .MapGet("/debug/group/{groupId}/entity/{entityId}", inspectorService.GetEntity)
                 .AllowAnonymous();
             builder.MapGet("/debug/engines", inspectorService.GetEngines).AllowAnonymous();
+            builder.MapPut("/debug/group/{groupId}/entity/{entityId}/{componentName}", inspectorService.SetComponent).AllowAnonymous();
         }
     }
 }

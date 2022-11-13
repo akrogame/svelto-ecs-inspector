@@ -5,7 +5,7 @@ import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
 import { useQuery } from "react-query";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { styled } from "@mui/material/styles";
 import Paper from "@mui/material/Paper";
 import Masonry from "@mui/lab/Masonry";
@@ -28,7 +28,7 @@ const hasComponent = (engine: Engine, component: string) => {
 };
 
 export default function Engines() {
-  const { isError, isLoading, data, error } = useQuery(
+  const { isError, isLoading, data, error } = useQuery<Engine[], AxiosError>(
     ["engines"],
     async () => {
       const x = await axios.get<Engine[]>("/debug/engines");
@@ -52,7 +52,7 @@ export default function Engines() {
   if (isError || error !== null)
     return (
       <Typography color="text.primary">
-        Error: {error ?? "unknown error happened"}
+        Error: {error.message ?? "unknown error happened"}
       </Typography>
     );
   if (data.length === 0)
