@@ -2,6 +2,7 @@
   "name": "svelto-ecs-inspector",
   "version": "0.1.0",
   "private": true,
+  "homepage": ".",
   "license": "MIT",
   "type": "module",
   "dependencies": {
