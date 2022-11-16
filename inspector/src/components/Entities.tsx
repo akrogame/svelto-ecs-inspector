@@ -1,31 +1,10 @@
-import Masonry from "@mui/lab/Masonry";
-import { Autocomplete, TextField } from "@mui/material";
-import CircularProgress from "@mui/material/CircularProgress";
-import Link from "@mui/material/Link";
-import Paper from "@mui/material/Paper";
-import { styled } from "@mui/material/styles";
+import { TextField } from "@mui/material";
 import Typography from "@mui/material/Typography";
-import axios, { AxiosError } from "axios";
 import * as React from "react";
-import { useQuery } from "react-query";
-import { Link as RouterLink, Route, Routes } from "react-router-dom";
-import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
+import { Route, Routes } from "react-router-dom";
 import EntityInspector from "./EntityInspector";
 import EntityList from "./EntityList";
 
-const Item = styled(Paper)(({ theme }) => ({
-  backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
-  ...theme.typography.body2,
-  padding: theme.spacing(0.5),
-  textAlign: "center",
-  color: theme.palette.text.secondary,
-}));
-
-type GrouppedEntities = {
-  name: string;
-  id: number;
-  entities: number[];
-};
 function NoEntitySelected() {
   return (
     <Typography fontSize={20} color="text.primary" gutterBottom>

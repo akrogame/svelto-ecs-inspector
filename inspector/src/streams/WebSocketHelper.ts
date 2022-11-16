@@ -19,27 +19,24 @@ export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
       const e = JSON.parse(txt) as Envelope<T>;
       opts.onMessageReceived(e);
     },
-    [opts.onMessageReceived]
+    [opts]
   );
 
-  const { sendMessage, lastMessage, readyState } = useWebSocket(
-    `ws://${serverAddr}`,
-    {
-      share: true,
-      onOpen: () => {
-        //console.log("opened");
-        //opts.onOpen();
-      },
-      //Will attempt to reconnect on all close events, such as server shutting down
-      shouldReconnect: (closeEvent) => true,
-      reconnectInterval: 2000,
-      onMessage: onMessageReceived,
-    }
-  );
+  const { sendMessage, readyState } = useWebSocket(`ws://${serverAddr}`, {
+    share: true,
+    onOpen: () => {
+      //console.log("opened");
+      //opts.onOpen();
+    },
+    //Will attempt to reconnect on all close events, such as server shutting down
+    shouldReconnect: (closeEvent) => true,
+    reconnectInterval: 2000,
+    onMessage: onMessageReceived,
+  });
 
   useEffect(() => {
-    if (readyState == ReadyState.OPEN) opts.onOpen();
-  }, [readyState]);
+    if (readyState === ReadyState.OPEN) opts.onOpen();
+  }, [opts, readyState]);
 
   const sendStringMessage = useCallback(
     (s: string) => {
@@ -53,6 +50,6 @@ export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
       sendStringMessage(msg);
     },
     readyState,
-    isOpen: readyState == ReadyState.OPEN,
+    isOpen: readyState === ReadyState.OPEN,
   };
 }

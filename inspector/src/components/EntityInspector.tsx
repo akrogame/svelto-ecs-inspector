@@ -3,10 +3,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import axios, { AxiosError } from "axios";
 import * as React from "react";
 import ReactJson, { InteractionProps } from "react-json-view";
-import { useQuery } from "react-query";
 import { useParams } from "react-router-dom";
 import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
 
@@ -24,10 +22,6 @@ type EntityComponent = {
   prettyName: string;
   data: any;
 };
-type EntityComponents = {
-  components: EntityComponent[];
-};
-
 export default function EntityInspector() {
   const params = useParams();
   const groupId = params.groupId;
@@ -50,7 +44,7 @@ export default function EntityInspector() {
   //     refetchInterval: 100,
   //   }
   // );
-  const { sendMessage, readyState, isOpen } = useInspectorStream({
+  const { sendMessage, isOpen } = useInspectorStream({
     onMessageReceived: (e: Envelope<any>) => {
       if (e.Id !== "entity-data") return;
       var result: Array<EntityComponent> = [];

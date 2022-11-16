@@ -21,7 +21,6 @@ import {
   NavLink,
   Outlet,
   useLocation,
-  useParams,
   useSearchParams,
 } from "react-router-dom";
 

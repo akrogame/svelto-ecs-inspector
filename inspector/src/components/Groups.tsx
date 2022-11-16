@@ -3,11 +3,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import axios, { AxiosError } from "axios";
-import * as React from "react";
 import { useState } from "react";
-import { useQuery } from "react-query";
-import useWebSocket from "react-use-websocket";
 import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
 
 const Item = styled(Paper)(({ theme }) => ({
@@ -54,8 +50,6 @@ const renderComponents = (group: Group) => {
 };
 
 export default function Groups() {
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
   const [data, setData] = useState<Group[] | undefined>(undefined);
 
   const { sendMessage } = useInspectorStream({

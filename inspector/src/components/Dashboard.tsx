@@ -1,12 +1,9 @@
-import { Box, Button, Grid, LinearProgress, Typography } from "@mui/material";
-import { useCallback } from "react";
-import { useState, useEffect } from "react";
+import { Box, LinearProgress } from "@mui/material";
+import { useState } from "react";
 import { Bar } from "react-chartjs-2";
-import useWebSocket, { ReadyState } from "react-use-websocket";
 import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
-import type { ChartData, ChartArea, ChartOptions } from "chart.js";
+import type { ChartData, ChartOptions } from "chart.js";
 import { Chart as ChartJS, registerables } from "chart.js";
-import { Chart } from "react-chartjs-2";
 ChartJS.register(...registerables);
 
 const options: ChartOptions<"bar"> = {
@@ -33,18 +30,6 @@ const options: ChartOptions<"bar"> = {
       text: "# Entities in groups",
     },
   },
-};
-
-const groups = (m: Map<string, number>) => {
-  const r: Array<React.ReactNode> = [];
-  m.forEach((count: number, group: string) => {
-    r.push(
-      <Typography>
-        {group}: {count}
-      </Typography>
-    );
-  });
-  return r;
 };
 
 export function Dashboard() {
