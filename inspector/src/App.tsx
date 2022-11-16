@@ -26,7 +26,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <Container className="App" maxWidth={false}>
-          <BrowserRouter>
+          <BrowserRouter basename="/svelto-ecs-inspector">
             <Routes>
               <Route path="" element={<Main />}>
                 <Route path="/" element={<Dashboard />} />
