@@ -1,8 +1,9 @@
 import DescriptionIcon from "@mui/icons-material/Description";
-import HomeIcon from '@mui/icons-material/Home';
+import HomeIcon from "@mui/icons-material/Home";
 import PeopleIcon from "@mui/icons-material/People";
 import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
 import AppBar from "@mui/material/AppBar";
+import Autocomplete from "@mui/material/Autocomplete";
 import Box from "@mui/material/Box";
 import CssBaseline from "@mui/material/CssBaseline";
 import Divider from "@mui/material/Divider";
@@ -16,36 +17,60 @@ import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import axios from "axios";
 import * as React from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import {
+  NavLink,
+  Outlet,
+  useLocation,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 const pages = [
   {
-    display: "Inspector",
-    link: "/",
+    display: "Summary",
+    link: "",
     icon: <HomeIcon />,
   },
   {
     display: "Groups",
-    link: "/groups",
+    link: "groups",
     icon: <DescriptionIcon />,
   },
   {
     display: "Entities",
-    link: "/entities",
+    link: "entities",
     icon: <PeopleIcon />,
   },
   {
     display: "Engines",
-    link: "/engines",
+    link: "engines",
     icon: <TwoWheelerIcon />,
   },
 ];
 
+export const ServerContext = React.createContext("localhost:9300");
+
+const servers = ["localhost:9300", "localhost:9301", "localhost:9302"];
+
 export default function PermanentDrawerLeft() {
-  const [currentPage, setCurrentPage] = React.useState<number>(0);
-  const [url, setUrl] = React.useState<string>("http://localhost:3001");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  console.log(location);
+
+  const findPage = () => {
+    const p = pages.findIndex(
+      (x, i) => i > 0 && location.pathname.startsWith(`/${x.link}`)
+    );
+    return p < 0 ? 0 : p;
+  };
+
+  const [currentPage, setCurrentPage] = React.useState<number>(findPage());
+  console.log(currentPage);
+  if (!searchParams.has("url")) setSearchParams({ url: servers[0] });
+  const urlFromParam = searchParams.get("url") || servers[0];
+  const [url, setUrl] = React.useState<string>(urlFromParam);
   React.useEffect(() => {
     axios.defaults.baseURL = url;
   }, [url]);
@@ -75,10 +100,24 @@ export default function PermanentDrawerLeft() {
         anchor="left"
       >
         <Toolbar>
-          <TextField
+          <Autocomplete
+            freeSolo
             value={url}
-            onChange={(event) => setUrl(event.target.value)}
-          ></TextField>
+            options={servers}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                sx={{ width: "230px", padding: 0, margin: 0 }}
+              />
+            )}
+            onChange={(_, newValue) => {
+              const url = newValue === null ? "" : newValue;
+              setUrl(url);
+              setSearchParams({
+                url: url,
+              });
+            }}
+          />
         </Toolbar>
         <Divider />
         <List>
@@ -101,7 +140,9 @@ export default function PermanentDrawerLeft() {
         sx={{ flexGrow: 1, bgcolor: "background.default", p: 3 }}
       >
         <Toolbar />
-        <Outlet />
+        <ServerContext.Provider value={url}>
+          <Outlet />
+        </ServerContext.Provider>
       </Box>
     </Box>
   );

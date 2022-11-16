@@ -3,9 +3,12 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Paper from "@mui/material/Paper";
 import { styled } from "@mui/material/styles";
 import Typography from "@mui/material/Typography";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import * as React from "react";
+import { useState } from "react";
 import { useQuery } from "react-query";
+import useWebSocket from "react-use-websocket";
+import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -15,13 +18,10 @@ const Item = styled(Paper)(({ theme }) => ({
   color: theme.palette.text.secondary,
 }));
 
-type Component = {
-  name: string;
-};
 type Group = {
   name: string;
   id: number;
-  components: Component[];
+  components: string[];
 };
 
 const renderComponents = (group: Group) => {
@@ -47,34 +47,37 @@ const renderComponents = (group: Group) => {
           gutterBottom
           maxWidth="100%"
         >
-          {component.name}
+          {component}
         </Typography>
       );
     });
 };
 
 export default function Groups() {
-  const { isError, isLoading, data, error } = useQuery(
-    ["groups"],
-    async () => {
-      const x = await axios.get<Group[]>("/debug/groups");
-      return x.data.map((x) => ({
-        name: x.name,
-        id: x.id,
-        components: x.components.sort((a, b) => a.name.localeCompare(b.name)),
-      }));
+  const enc = new TextEncoder();
+  const dec = new TextDecoder();
+  const [data, setData] = useState<Group[] | undefined>(undefined);
+
+  const { sendMessage } = useInspectorStream({
+    onMessageReceived: (e: Envelope<any>) => {
+      if (e.Id !== "groups") return;
+      var result: Array<Group> = [];
+
+      for (var i in e.Payload)
+        result.push({
+          name: i,
+          id: 0,
+          components: e.Payload[i].sort((a: any, b: any) => a.localeCompare(b)),
+        });
+
+      setData(result);
     },
-    {
-      refetchInterval: 1000,
-    }
-  );
-  if (isLoading || data === undefined) return <CircularProgress />;
-  if (isError || error !== null)
-    return (
-      <Typography color="text.primary">
-        Error: {error ?? "unknown error happened"}
-      </Typography>
-    );
+    onOpen: () => {
+      sendMessage("sub groups");
+    },
+  });
+  if (data === undefined) return <CircularProgress />;
+
   if (data.length === 0)
     return <Typography color="text.primary">No groups</Typography>;
   return (

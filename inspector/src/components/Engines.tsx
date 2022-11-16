@@ -5,10 +5,11 @@ import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import TextField from "@mui/material/TextField";
 import { useQuery } from "react-query";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { styled } from "@mui/material/styles";
 import Paper from "@mui/material/Paper";
 import Masonry from "@mui/lab/Masonry";
+import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
 
 const Item = styled(Paper)(({ theme }) => ({
   backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
@@ -19,42 +20,39 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 type Engine = {
-  name: string;
-  components: Array<Array<string>>;
+  ClassName: string;
+  Components: Array<string>;
 };
 
 const hasComponent = (engine: Engine, component: string) => {
-  return engine.components.some((q) => q.some((c) => c === component));
+  return engine.Components.some((c) => c === component);
 };
 
 export default function Engines() {
-  const { isError, isLoading, data, error } = useQuery(
-    ["engines"],
-    async () => {
-      const x = await axios.get<Engine[]>("/debug/engines");
-      return x.data;
+  const [data, setData] = React.useState<Engine[] | undefined>(undefined);
+  const { sendMessage } = useInspectorStream({
+    onMessageReceived: (e: Envelope<Engine[]>) => {
+      if (e.Id !== "engines") return;
+
+      setData(e.Payload);
     },
-    {
-      refetchInterval: 1000,
-    }
-  );
+    onOpen: () => {
+      sendMessage("get-engines");
+    },
+  });
+
   const components = React.useMemo(() => {
     const set =
       data === undefined
         ? new Set<string>()
-        : new Set<string>(data.flatMap((x) => x.components.flatMap((q) => q)));
+        : new Set<string>(data.flatMap((x) => x.Components));
     return Array.from(set).sort();
   }, [data]);
 
   const [filter, setFilter] = React.useState<string[]>([]);
 
-  if (isLoading || data === undefined) return <CircularProgress />;
-  if (isError || error !== null)
-    return (
-      <Typography color="text.primary">
-        Error: {error ?? "unknown error happened"}
-      </Typography>
-    );
+  if (data === undefined) return <CircularProgress />;
+
   if (data.length === 0)
     return <Typography color="text.primary">No systems</Typography>;
   return (
@@ -82,7 +80,7 @@ export default function Engines() {
           {data
             .filter((x) => filter.every((f) => hasComponent(x, f)))
             .map((system, index) => {
-              if (system.components === undefined)
+              if (system.Components === undefined)
                 console.error("undefined", system);
               return (
                 <Item key={index}>
@@ -91,33 +89,29 @@ export default function Engines() {
                     color="text.secondary"
                     gutterBottom
                   >
-                    <b>{system.name}</b>
+                    <b>{system.ClassName}</b>
                   </Typography>
                   <hr></hr>
-                  {system.components.map((queryInvocation, qi) => {
+                  {system.Components.map((component, qi) => {
                     return (
                       <div key={qi}>
-                        {queryInvocation.map((component, ci) => {
-                          return (
-                            <Typography
-                              key={`${qi}-${ci}`}
-                              fontSize={10}
-                              fontWeight={
-                                filter.some((f) => f === component)
-                                  ? "bold"
-                                  : "initial"
-                              }
-                              color={
-                                filter.some((f) => f === component)
-                                  ? "primary"
-                                  : "text.secondary"
-                              }
-                              gutterBottom
-                            >
-                              {component}
-                            </Typography>
-                          );
-                        })}
+                        <Typography
+                          key={`${qi}`}
+                          fontSize={10}
+                          fontWeight={
+                            filter.some((f) => f === component)
+                              ? "bold"
+                              : "initial"
+                          }
+                          color={
+                            filter.some((f) => f === component)
+                              ? "primary"
+                              : "text.secondary"
+                          }
+                          gutterBottom
+                        >
+                          {component}
+                        </Typography>
                         <hr></hr>
                       </div>
                     );

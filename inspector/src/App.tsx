@@ -3,6 +3,7 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
+import { Dashboard } from "./components/Dashboard";
 import Engines from "./components/Engines";
 import Entities from "./components/Entities";
 import EntityInspector from "./components/EntityInspector";
@@ -24,18 +25,19 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
-        <Container className="App">
+        <Container className="App" maxWidth={false}>
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Main />}>
-                <Route path="/groups/" element={<Groups />} />
-                <Route path="entities/" element={<Entities />}>
+              <Route path="" element={<Main />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="groups/" element={<Groups />} />
+                <Route path="entities//*" element={<Entities />}>
                   <Route
                     path=":groupId/:entityId/"
                     element={<EntityInspector />}
                   />
                 </Route>
-                <Route path="/engines/" element={<Engines />} />
+                <Route path="engines/" element={<Engines />} />
               </Route>
             </Routes>
           </BrowserRouter>
