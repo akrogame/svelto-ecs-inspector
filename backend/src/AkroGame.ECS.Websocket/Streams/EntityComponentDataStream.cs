@@ -12,16 +12,18 @@ using Svelto.ECS.Internal;
 
 namespace AkroGame.ECS.Websocket.Streams
 {
-    public struct ComponentWithData {
+    public struct ComponentWithData
+    {
         public ComponentWithData(string prettyName, JObject data)
         {
             PrettyName = prettyName;
             Data = data;
         }
 
-        public string PrettyName {get;}
-        public JObject Data {get;}
+        public string PrettyName { get; }
+        public JObject Data { get; }
     }
+
     public class EntityComponentDataStream : InspectorDataStream<EGID>
     {
         private readonly EntitiesDB entitiesDB;
@@ -48,9 +50,7 @@ namespace AkroGame.ECS.Websocket.Streams
             );
             var components = new Dictionary<string, ComponentWithData>();
             if (!groupEntityComponentsDB.ContainsKey(context.groupID))
-                return Encoding.UTF8.GetBytes(
-                    JsonConvert.SerializeObject(MakeEnvelope(components))
-                );
+                return SocketUtil.Serialize(MakeEnvelope(components));
             foreach (Type componentType in groupEntityComponentsDB[context.groupID].keys)
             {
                 // This is just a quick dirty check because we can't serialize these components for sure
@@ -82,13 +82,19 @@ namespace AkroGame.ECS.Websocket.Streams
                     if (componentData is null)
                         continue;
                     var rawComponentData = JObject.FromObject(componentData, serializer);
-                    var componentWithData = new ComponentWithData(componentType.Name, rawComponentData);
-                    components.Add(componentType.AssemblyQualifiedName.Replace(" ", ""), componentWithData);
+                    var componentWithData = new ComponentWithData(
+                        componentType.Name,
+                        rawComponentData
+                    );
+                    components.Add(
+                        componentType.AssemblyQualifiedName.Replace(" ", ""),
+                        componentWithData
+                    );
                 }
-                catch (Exception ex) { }
+                catch (Exception) { }
             }
 
-            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(MakeEnvelope(components)));
+            return SocketUtil.Serialize(MakeEnvelope(components));
         }
     }
 }

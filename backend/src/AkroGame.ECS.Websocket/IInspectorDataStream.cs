@@ -51,7 +51,7 @@ namespace AkroGame.ECS.Websocket
             if (nextSendIn > TimeSpan.Zero)
                 return;
 
-            nextSendIn = sendInterval;
+            nextSendIn += sendInterval;
             foreach (var inspector in inspectors)
             {
                 var data = FetchData(inspector.Value);

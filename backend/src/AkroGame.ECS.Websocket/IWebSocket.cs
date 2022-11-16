@@ -11,8 +11,15 @@ namespace AkroGame.ECS.Websocket
         ///  and storing it could lead to undesirable effects
         /// </summary>
         event Action<Envelope<int, ArraySegment<byte>>> OnData;
+
+        /// <summary>
+        /// Should be called when the remote connection is closed
+        /// </summary>
         event Action<int> OnClose;
 
+        /// <summary>
+        /// Sends the byte array segment to the client specified by the id
+        /// </summary>
         public void Send(int connectionId, ArraySegment<byte> source);
     }
 }

@@ -73,7 +73,7 @@ namespace AkroGame.ECS.Websocket.Streams
                     entities.OrderBy(x => x).Take(10).ToArray()
                 );
             }
-            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(MakeEnvelope(groups)));
+            return SocketUtil.Serialize(MakeEnvelope(groups));
         }
     }
 }

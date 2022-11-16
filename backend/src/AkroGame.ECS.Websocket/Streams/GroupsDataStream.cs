@@ -35,7 +35,7 @@ namespace AkroGame.ECS.Websocket.Streams
                 }
                 groups[item.key.ToString()] = components;
             }
-            return Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(MakeEnvelope(groups)));
+            return SocketUtil.Serialize(MakeEnvelope(groups));
         }
     }
 }

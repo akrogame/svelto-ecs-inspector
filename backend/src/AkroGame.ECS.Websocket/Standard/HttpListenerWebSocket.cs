@@ -49,17 +49,19 @@ namespace AkroGame.ECS.Websocket.Standard
         {
             while (!cancellationToken.IsCancellationRequested)
             {
+                Console.WriteLine("Waiting for connection....");
                 HttpListenerContext context = await httpListener
                     .GetContextAsync()
                     .ConfigureAwait(false);
                 if (context.Request.IsWebSocketRequest)
                 {
+                    Console.WriteLine("Connected....");
                     HttpListenerWebSocketContext webSocketContext =
                         await context.AcceptWebSocketAsync(null);
 
                     Interlocked.Increment(ref clientId);
                     connections.TryAdd(clientId, webSocketContext.WebSocket);
-
+                    Console.WriteLine("Starting receiver....");
                     var t = new Task(
                         () => WebSocketWorker(webSocketContext, clientId).ConfigureAwait(false)
                     );
@@ -79,6 +81,7 @@ namespace AkroGame.ECS.Websocket.Standard
                     && !cancellationToken.IsCancellationRequested
                 )
                 {
+                    Console.WriteLine("Receiving....");
                     WebSocketReceiveResult receiveResult = await socket.ReceiveAsync(
                         new ArraySegment<byte>(buffer),
                         cancellationToken

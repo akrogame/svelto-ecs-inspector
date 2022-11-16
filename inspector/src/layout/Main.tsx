@@ -50,11 +50,9 @@ const pages = [
   },
 ];
 
-const servers = [
-  "http://localhost:9300",
-  "http://localhost:9301",
-  "http://localhost:9302",
-];
+export const ServerContext = React.createContext("localhost:9300");
+
+const servers = ["localhost:9300", "localhost:9301", "localhost:9302"];
 
 export default function PermanentDrawerLeft() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -142,7 +140,9 @@ export default function PermanentDrawerLeft() {
         sx={{ flexGrow: 1, bgcolor: "background.default", p: 3 }}
       >
         <Toolbar />
-        <Outlet />
+        <ServerContext.Provider value={url}>
+          <Outlet />
+        </ServerContext.Provider>
       </Box>
     </Box>
   );

@@ -16,38 +16,42 @@ namespace AkroGame.ECS.Analyzer
         public void Execute(GeneratorExecutionContext context)
         {
             context.AddSource(
-                $"EngineNames.g.cs",
+                $"EnginesMetadata.g.cs",
                 GenerateEngineNames(FindQueryInvocations(context))
             );
         }
 
         private SourceText GenerateEngineNames(List<QueryInvocation> methods)
         {
-            var ns = "AkroGame.ECS.Inspector";
-            var classT = "EngineNames";
-            var listT = "List";
-            var stringT = "string";
+            var ns = "Svelto.ECS.Meta";
+            var className = "EnginesMetadata";
+            var listT = "global::System.Collections.Generic.List<string>";
+            var dictT = $"global::System.Collections.Generic.Dictionary<string, {listT}>";
             return SourceText.From(
                 CSharpSyntaxTree
                     .ParseText(
                         $@"
-using System.Collections.Generic;
-
 namespace {ns}
 {{
-    public static class {classT}
+    internal static class {className}
     {{
-        public record struct QueryInvocation({stringT} ClassName, {listT}<{stringT}> Components);
-        public static {listT}<QueryInvocation> QueryInvocations = new {listT}<QueryInvocation>() {{
+        public static {dictT} QueryInvocations =
+            new {dictT}() {{
             {string.Join(",\n", methods.Select((invocation, i) => $@"
-            new QueryInvocation(""{invocation.ClassName}"", new {listT}<{stringT}>() {{
-                {string.Join(",", invocation.Components.Select(x => $@"""{x}"""))}
-            }})
-            
+
+            {{ 
+                ""{invocation.ClassName}{i}"",
+                new {listT}()
+                {{
+                    {string.Join(",", invocation.Components.Select(x => $@"""{x}"""))}
+                }}
+            }}
+
             "))}
         }};
     }}
-}}".ToString()
+}}
+".ToString()
                     )
                     .GetRoot()
                     .NormalizeWhitespace()
@@ -94,7 +98,11 @@ namespace {ns}
                             .OfType<InvocationExpressionSyntax>()
                             .Where(_ => IsQueryCall(semanticModel, _))
                             .Select(
-                                _ => new QueryInvocation(t.Identifier.ToString(), ExtractGenericParameters(_))
+                                _ =>
+                                    new QueryInvocation(
+                                        t.Identifier.ToString(),
+                                        ExtractGenericParameters(_)
+                                    )
                             );
                     }
                 )

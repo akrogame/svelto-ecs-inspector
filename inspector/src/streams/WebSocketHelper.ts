@@ -1,5 +1,6 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useContext, useEffect } from "react";
 import useWebSocket, { ReadyState } from "react-use-websocket";
+import { ServerContext } from "../layout/Main";
 
 export interface Envelope<T> {
   Id: string;
@@ -11,6 +12,7 @@ export interface InspectorStreamOptions {
 }
 const enc = new TextEncoder();
 export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
+  const serverAddr = useContext(ServerContext);
   const onMessageReceived = useCallback(
     async (msg: MessageEvent<any>) => {
       const txt = await (msg.data as Blob).text();
@@ -21,7 +23,7 @@ export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
   );
 
   const { sendMessage, lastMessage, readyState } = useWebSocket(
-    "ws://localhost:7777",
+    `ws://${serverAddr}`,
     {
       share: true,
       onOpen: () => {
