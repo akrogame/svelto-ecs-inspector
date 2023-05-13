@@ -20,7 +20,7 @@ namespace AkroGame.ECS.Websocket.Streams
     {
         private readonly FasterDictionary<
             ExclusiveGroupStruct,
-            FasterDictionary<RefWrapperType, ITypeSafeDictionary>
+            FasterDictionary<ComponentID, ITypeSafeDictionary>
         > groupEntityComponentsDB;
 
         public DashboardDataStream(string key, EnginesMetadata meta, EnginesRoot enginesRoot)

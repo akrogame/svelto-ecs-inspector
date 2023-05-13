@@ -29,15 +29,11 @@ namespace AkroGame.ECS.Websocket
             return tmp;
         }
 
-        public static unsafe void WriteToUnsafeMemory(
-            IntPtr array,
-            Type t,
-            object component,
-            uint index
-        )
+        public static void WriteToUnsafeMemory(IntPtr array, Type t, object component, uint index)
         {
             MethodInfo? sizeOfMethod = typeof(MemoryUtilities).GetMethod(
-                "SizeOf"
+                "SizeOf",
+                Array.Empty<Type>()
             )?.MakeGenericMethod(new Type[] { t });
 
             var sizeB = sizeOfMethod?.Invoke(null, null);

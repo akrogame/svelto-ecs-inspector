@@ -12,7 +12,7 @@ namespace AkroGame.ECS.Websocket.Streams
     {
         private readonly FasterDictionary<
             ExclusiveGroupStruct,
-            FasterDictionary<RefWrapperType, ITypeSafeDictionary>
+            FasterDictionary<ComponentID, ITypeSafeDictionary>
         > groupEntityComponentsDB;
 
         public GroupsDataStream(string key, EnginesRoot enginesRoot)
@@ -30,7 +30,8 @@ namespace AkroGame.ECS.Websocket.Streams
 
                 foreach (var componentEntry in item.value)
                 {
-                    Type componentType = componentEntry.key;
+                    var componentType = ComponentTypeMap.FetchType(componentEntry.key);
+
                     components.Add(componentType.Name.ToString());
                 }
                 groups[item.key.ToString()] = components;

@@ -5,9 +5,9 @@ using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Svelto.Common.Internal;
 using Svelto.DataStructures;
 using Svelto.ECS;
-using Svelto.ECS.DataStructures;
 using Svelto.ECS.Internal;
 
 namespace AkroGame.ECS.Websocket.Streams
@@ -29,7 +29,7 @@ namespace AkroGame.ECS.Websocket.Streams
         private readonly EntitiesDB entitiesDB;
         private readonly FasterDictionary<
             ExclusiveGroupStruct,
-            FasterDictionary<RefWrapperType, ITypeSafeDictionary>
+            FasterDictionary<ComponentID, ITypeSafeDictionary>
         > groupEntityComponentsDB;
         private readonly JsonSerializer serializer;
 
@@ -51,8 +51,9 @@ namespace AkroGame.ECS.Websocket.Streams
             var components = new Dictionary<string, ComponentWithData>();
             if (!groupEntityComponentsDB.ContainsKey(context.groupID))
                 return SocketUtil.Serialize(MakeEnvelope(components));
-            foreach (Type componentType in groupEntityComponentsDB[context.groupID].keys)
+            foreach (var componentId in groupEntityComponentsDB[context.groupID].keys)
             {
+                var componentType = ComponentTypeMap.FetchType(componentId);
                 // This is just a quick dirty check because we can't serialize these components for sure
                 if (
                     componentType.Name == "EntityInfoComponent"

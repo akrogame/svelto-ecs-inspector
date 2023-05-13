@@ -31,13 +31,13 @@ namespace AkroGame.ECS.Websocket
 
         public static FasterDictionary<
             ExclusiveGroupStruct,
-            FasterDictionary<RefWrapperType, ITypeSafeDictionary>
+            FasterDictionary<ComponentID, ITypeSafeDictionary>
         > GetGroupEntityComponentsDB(this EnginesRoot enginesRoot) =>
             enginesRoot.GetPrivateField<
                 EnginesRoot,
                 FasterDictionary<
                     ExclusiveGroupStruct,
-                    FasterDictionary<RefWrapperType, ITypeSafeDictionary>
+                    FasterDictionary<ComponentID, ITypeSafeDictionary>
                 >
             >("_groupEntityComponentsDB");
     }
