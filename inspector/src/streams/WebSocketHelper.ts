@@ -11,15 +11,18 @@ export interface InspectorStreamOptions {
   onOpen: () => void;
 }
 const enc = new TextEncoder();
-export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
+export function useInspectorStream<T = any>({
+  onOpen: propOnOpen,
+  onMessageReceived: propMessageReceived,
+}: InspectorStreamOptions) {
   const serverAddr = useContext(ServerContext);
   const onMessageReceived = useCallback(
     async (msg: MessageEvent<any>) => {
       const txt = await (msg.data as Blob).text();
       const e = JSON.parse(txt) as Envelope<T>;
-      opts.onMessageReceived(e);
+      propMessageReceived(e);
     },
-    [opts]
+    [propMessageReceived]
   );
 
   const { sendMessage, readyState } = useWebSocket(`ws://${serverAddr}`, {
@@ -35,8 +38,8 @@ export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
   });
 
   useEffect(() => {
-    if (readyState === ReadyState.OPEN) opts.onOpen();
-  }, [opts, readyState]);
+    if (readyState === ReadyState.OPEN) propOnOpen();
+  }, [propOnOpen, readyState]);
 
   const sendStringMessage = useCallback(
     (s: string) => {
@@ -46,9 +49,7 @@ export function useInspectorStream<T = any>(opts: InspectorStreamOptions) {
   );
 
   return {
-    sendMessage: (msg: string) => {
-      sendStringMessage(msg);
-    },
+    sendMessage: sendStringMessage,
     readyState,
     isOpen: readyState === ReadyState.OPEN,
   };

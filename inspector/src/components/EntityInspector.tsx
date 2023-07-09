@@ -58,9 +58,7 @@ export default function EntityInspector() {
 
       setData(result);
     },
-    onOpen: () => {
-      sendMessage(`sub entity-data ${groupId} ${entityId}`);
-    },
+    onOpen: () => {},
   });
 
   React.useEffect(() => {
