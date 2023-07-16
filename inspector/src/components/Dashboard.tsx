@@ -4,7 +4,9 @@ import { Bar } from "react-chartjs-2";
 import { Envelope, useInspectorStream } from "../streams/WebSocketHelper";
 import type { ChartData, ChartOptions } from "chart.js";
 import { Chart as ChartJS, registerables } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 ChartJS.register(...registerables);
+ChartJS.register(ChartDataLabels);
 
 const options: ChartOptions<"bar"> = {
   indexAxis: "y" as const,
@@ -28,6 +30,12 @@ const options: ChartOptions<"bar"> = {
     title: {
       display: true,
       text: "# Entities in groups",
+    },
+    datalabels: {
+      color: "white",
+      font: {
+        weight: "bold",
+      },
     },
   },
 };
@@ -55,8 +63,8 @@ export function Dashboard() {
           {
             label: "# entities",
             data: entries.map((x) => x[1]),
-            borderColor: "rgb(255, 99, 132)",
-            backgroundColor: "rgba(255, 99, 132, 0.5)",
+            borderColor: "rgb(99, 132, 255)",
+            backgroundColor: "rgba(99, 132, 255, 0.5)",
           },
         ],
       };
