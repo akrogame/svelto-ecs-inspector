@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Svelto.Common.Internal;
 using Svelto.DataStructures;
 using Svelto.ECS;
 using Svelto.ECS.Internal;
@@ -44,16 +42,30 @@ namespace AkroGame.ECS.Websocket.Streams
         protected override ArraySegment<byte> FetchData(EGID context)
         {
             // QueryEntity<T>(this EntitiesDB entitiesDb, EGID entityGID)
-            MethodInfo? queryMethod = typeof(EntityNativeDBExtensions).GetMethod(
-                "QueryEntity",
-                new[] { typeof(EntitiesDB), typeof(uint), typeof(ExclusiveGroupStruct) }
-            );
             var components = new Dictionary<string, ComponentWithData>();
             if (!groupEntityComponentsDB.ContainsKey(context.groupID))
                 return SocketUtil.Serialize(MakeEnvelope(components));
             foreach (var componentId in groupEntityComponentsDB[context.groupID].keys)
             {
                 var componentType = ComponentTypeMap.FetchType(componentId);
+                MethodInfo? queryMethod = typeof(EntityNativeDBExtensions)
+                    .GetMethods()
+                    .FirstOrDefault(x => x.Name == "TryGetEntity" && x.GetParameters().Length == 4);
+                if (queryMethod is null)
+                {
+                    Svelto.Console.LogError(
+                        "Could not find query method for component " + componentType.Name
+                    );
+                    continue;
+                }
+                queryMethod = queryMethod.MakeGenericMethod(componentType);
+                if (queryMethod is null)
+                {
+                    Svelto.Console.LogError(
+                        "Could not make generic query method for component " + componentType.Name
+                    );
+                    continue;
+                }
                 // This is just a quick dirty check because we can't serialize these components for sure
                 if (
                     componentType.Name == "EntityInfoComponent"
@@ -68,21 +80,23 @@ namespace AkroGame.ECS.Websocket.Streams
                 )
                     continue;
 
-                MethodInfo? generic = queryMethod?.MakeGenericMethod(componentType);
-                if (generic is null)
-                    continue;
-
                 // Not all components are serializable, instead of trying to guess it just try to serialize it and see if it fails
                 // (for example components with NativeDynamicArray fail serialization)
                 try
                 {
-                    var componentData = generic?.Invoke(
+                    var @params = new object[]
+                    {
                         entitiesDB,
-                        new object[] { entitiesDB, context.entityID, context.groupID }
-                    );
-                    if (componentData is null)
+                        context.entityID,
+                        context.groupID,
+                        null!
+                    };
+                    var found = queryMethod?.Invoke(entitiesDB, @params);
+                    if (found is null || !(bool)found)
                         continue;
-                    var rawComponentData = JObject.FromObject(componentData, serializer);
+                    if (@params[3] is null)
+                        continue;
+                    var rawComponentData = JObject.FromObject(@params[3], serializer);
                     var componentWithData = new ComponentWithData(
                         componentType.Name,
                         rawComponentData
@@ -92,7 +106,13 @@ namespace AkroGame.ECS.Websocket.Streams
                         componentWithData
                     );
                 }
-                catch (Exception) { }
+                catch (Exception ex)
+                {
+                    Svelto.Console.LogException(
+                        ex,
+                        "Failed to serialize component " + componentType.Name
+                    );
+                }
             }
 
             return SocketUtil.Serialize(MakeEnvelope(components));
