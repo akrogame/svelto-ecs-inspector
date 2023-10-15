@@ -1,7 +1,7 @@
 import { Container, createTheme, ThemeProvider } from "@mui/material";
 import React from "react";
 import { QueryClient, QueryClientProvider } from "react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { HashRouter, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { Dashboard } from "./components/Dashboard";
 import Engines from "./components/Engines";
@@ -26,7 +26,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <Container className="App" maxWidth={false}>
-          <BrowserRouter basename="/svelto-ecs-inspector">
+          <HashRouter basename="/svelto-ecs-inspector">
             <Routes>
               <Route path="" element={<Main />}>
                 <Route path="/" element={<Dashboard />} />
@@ -40,7 +40,7 @@ function App() {
                 <Route path="engines/" element={<Engines />} />
               </Route>
             </Routes>
-          </BrowserRouter>
+          </HashRouter>
         </Container>
       </ThemeProvider>
     </QueryClientProvider>
