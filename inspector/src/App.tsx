@@ -26,7 +26,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <Container className="App" maxWidth={false}>
-          <HashRouter basename="/svelto-ecs-inspector">
+          <HashRouter basename="/">
             <Routes>
               <Route path="" element={<Main />}>
                 <Route path="/" element={<Dashboard />} />

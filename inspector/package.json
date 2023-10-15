@@ -2,7 +2,7 @@
   "name": "svelto-ecs-inspector",
   "version": "0.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://akrogame.github.io/svelto-ecs-inspector",
   "license": "MIT",
   "type": "module",
   "dependencies": {
